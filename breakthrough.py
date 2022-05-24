@@ -3,10 +3,10 @@ from pygame.locals import *
 import random
 from piece import Piece
 from utils import Utils
-
+from breakthrough_board import breakthrough_board
 import time
-
-class Chess(object):
+from algo import algorithm
+class Breakthrough(object):
     def __init__(self, screen, pieces_src, square_coords, square_length):
         # display surface
         self.screen = screen
@@ -37,7 +37,10 @@ class Chess(object):
         self.winner = ""
 
         self.reset()
-    
+
+        self.AI = algorithm(breakthrough_board())
+        self.algo_suggest = False
+        self.inf = 10000
     def reset(self):
         # clear moves lists
         self.moves = []
@@ -66,14 +69,10 @@ class Chess(object):
 
         # reset the board
         for i in range(97, 105):
-            x = 8
-            while x>0:
-                if(x==7 or x == 8):
-                    self.piece_location[chr(i)][x][0] = "black_pawn"
-                elif(x==2 or x == 1):
-                    self.piece_location[chr(i)][x][0] = "white_pawn"
-               
-                x = x - 1
+            self.piece_location[chr(i)][8][0] = "black_pawn"
+            self.piece_location[chr(i)][7][0] = "black_pawn"
+            self.piece_location[chr(i)][1][0] = "white_pawn"
+            self.piece_location[chr(i)][2][0] = "white_pawn"
 
 
     # 
@@ -96,10 +95,20 @@ class Chess(object):
         # let player with black piece play
         if(self.turn["black"]):
             self.move_piece("black")
+            self.algo_suggest = False
         # let player with white piece play
         elif(self.turn["white"]):
+            
+            if self.algo_suggest == False:
+                self.AI.start_time = time.time()
+                best_value, best_move = self.AI.alpha_beta_pruning(5, -self.inf, self.inf, '')
+                print(f'white should move {best_move[:2]} to {best_move[2:]}')
+                print(f'total time: {time.time() - self.AI.start_time}')
+                self.algo_suggest = True
             self.move_piece("white")
-
+            # self.move_piece("white", ["white_pawn", best_move[0], int(best_move[1])])
+            # self.move_piece("white", ["", best_move[2], int(best_move[3])])
+            
     # method to draw pieces on the chess board
     def draw_pieces(self):
         transparent_green = (0,194,39,170)
@@ -260,9 +269,12 @@ class Chess(object):
                 rowNo = 8 - y
 
                 # find the pieces to remove
-                des_piece_name = self.piece_location[columnChar][rowNo][0]
-                if(des_piece_name[:5] == piece_name[:5]):
-                    to_remove.append(pos)
+                try:
+                    des_piece_name = self.piece_location[columnChar][rowNo][0]
+                    if(des_piece_name[:5] == piece_name[:5]):
+                        to_remove.append(pos)
+                except:
+                    pass
 
             # remove position from positions list
             for i in to_remove:
@@ -273,21 +285,20 @@ class Chess(object):
     def check_game_end(self):
         
         for i in range(97, 105):
-            self.piece_location[chr(i)][x][0]
-        for i in range(97, 105):
-            x = 8
-            while x>0:
-                if(x==7 or x == 8):
-                    self.piece_location[chr(i)][x][0] = "black_pawn"
-                elif(x==2 or x == 1):
-                    self.piece_location[chr(i)][x][0] = "white_pawn"
-               
-                x = x - 1
-        pass
+            if self.piece_location[chr(i)][8][0] == "white_pawn":
+                self.winner = "White"
+                print("White wins")
+                break
+            if self.piece_location[chr(i)][1][0] == "black_pawn":
+                self.winner = "Black"
+                print("Black wins")
+                break
 
-    def move_piece(self, turn):
+
+    def move_piece(self, turn, square = None):
         # get the coordinates of the square selected on the board
-        square = self.get_selected_square()
+        if square == None:
+            square = self.get_selected_square()
 
         # if a square was selected
         if square:
@@ -305,7 +316,7 @@ class Chess(object):
 
             # if there's a piece on the selected square
             if(len(piece_name) > 0) and (piece_color == turn):
-                # find possible moves for thr piece
+                # find possible moves for the piece
                 self.moves = self.possible_moves(piece_name, [x,y])
 
             # checkmate mechanism
@@ -364,7 +375,7 @@ class Chess(object):
                                     rowNo = 8 - l
                                     # get the name of the 
                                     piece_name = self.piece_location[columnChar][rowNo][0]
-                                    
+                                    # print([piece_name, columnChar, rowNo])
                                     return [piece_name, columnChar, rowNo]
                             except:
                                 pass
@@ -381,12 +392,6 @@ class Chess(object):
 
         p = self.piece_location[columnChar][rowNo]
         
-        if p[0] == "white_king":
-            self.winner = "Black"
-            print("Black wins")
-        elif p[0] == "black_king":
-            self.winner = "White"
-            print("White wins")
 
         # add the captured piece to list
         self.captured.append(p)
@@ -414,6 +419,12 @@ class Chess(object):
                     # remove source piece from its current position
                     self.piece_location[k][key][0] = ""
 
+                    
+
+                    src_location = k + str(key)
+                    des_location = desColChar + str(desRowNo)
+                    print("{} moved from {} to {}".format(src_name,  src_location, des_location))
+
                     # change turn
                     if(self.turn["black"]):
                         self.turn["black"] = 0
@@ -421,11 +432,7 @@ class Chess(object):
                     elif("white"):
                         self.turn["black"] = 1
                         self.turn["white"] = 0
-
-                    src_location = k + str(key)
-                    des_location = desColChar + str(desRowNo)
-                    print("{} moved from {} to {}".format(src_name,  src_location, des_location))
-
+                    self.AI.board.move_chessmen(src_location+des_location)
 
     # helper function to find diagonal moves
     def diagonal_moves(self, positions, piece_name, piece_coord):

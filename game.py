@@ -2,7 +2,7 @@ import os
 import pygame
 from pygame.locals import *
 from piece import Piece
-from chess import Chess
+from breakthrough import Breakthrough
 from utils import Utils
 
 class Game:
@@ -70,7 +70,7 @@ class Game:
         # get location of image containing the chess pieces
         pieces_src = os.path.join(self.resources, "pieces.png")
         # create class object that handles the gameplay logic
-        self.chess = Chess(self.screen, pieces_src, self.board_locations, square_length)
+        self.chess = Breakthrough(self.screen, pieces_src, self.board_locations, square_length)
 
         # game loop
         while self.running:
@@ -129,8 +129,9 @@ class Game:
         big_font = pygame.font.SysFont("comicsansms", 50)
         small_font = pygame.font.SysFont("comicsansms", 20)
         # create text to be shown on the game menu
-        welcome_text = big_font.render("Chess", False, black_color)
-        created_by = small_font.render("Created by Sheriff", True, black_color)
+        welcome_text = big_font.render("Breakthrough", False, black_color)
+        original_chess_created_by = small_font.render("Original chess game created by Sheriff", True, black_color)
+        Breakthrough_created_by = small_font.render("Breakthrough created by Sophie", True, black_color)
         start_btn_label = small_font.render("Play", True, white_color)
         
         # show welcome text
@@ -138,9 +139,12 @@ class Game:
                       ((self.screen.get_width() - welcome_text.get_width()) // 2, 
                       150))
         # show credit text
-        self.screen.blit(created_by, 
-                      ((self.screen.get_width() - created_by.get_width()) // 2, 
-                      self.screen.get_height() - created_by.get_height() - 100))
+        self.screen.blit(original_chess_created_by, 
+                      ((self.screen.get_width() - original_chess_created_by.get_width()) // 2, 
+                      self.screen.get_height() - original_chess_created_by.get_height() - 100))
+        self.screen.blit(Breakthrough_created_by, 
+                      ((self.screen.get_width() - Breakthrough_created_by.get_width()) // 2, 
+                      self.screen.get_height() - Breakthrough_created_by.get_height() - 150))
         # show text on the Play button
         self.screen.blit(start_btn_label, 
                       ((start_btn.x + (start_btn.width - start_btn_label.get_width()) // 2, 
