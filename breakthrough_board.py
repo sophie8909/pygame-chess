@@ -1,7 +1,7 @@
 class breakthrough_board():
-    def __init__(self):
+    def __init__(self, p1_is_white):
         # save who is white(first)
-        self.p1_is_white = True
+        self.p1_is_white = p1_is_white
         # save white chessmen's position with bitmap
         self.white_board = self.generate_half_chessmen()
         self.black_board = self.white_board << (8*6)

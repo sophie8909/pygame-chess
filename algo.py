@@ -6,8 +6,8 @@ class algorithm():
         self.board = board
         self.start_time = 0.0
     def is_time_limit(self):
-        # return time.time() - self.start_time >= 3
-        return False
+        return time.time() - self.start_time >= 60
+        # return False
     # start from p1 turn
     def negative_max(self, depth, is_p1_turn, move):
         best_value = -inf

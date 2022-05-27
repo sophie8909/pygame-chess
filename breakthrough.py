@@ -36,21 +36,19 @@ class Breakthrough(object):
         #
         self.winner = ""
 
-        self.reset()
-
-        self.AI = algorithm(breakthrough_board())
-        self.algo_suggest = False
+        # AI
         self.inf = 10000
+        self.white_is_AI = False
+        self.white_AI = None
+        self.black_is_AI = False
+        self.black_AI = None
+        self.reset()
     def reset(self):
         # clear moves lists
         self.moves = []
 
-        # randomize player turn
-        x = random.randint(0, 1)
-        if(x == 1):
-            self.turn["black"] = 1
-        elif(x == 0):
-            self.turn["white"] = 1
+        # white first
+        self.turn["white"] = 1
 
         # two dimensonal dictionary containing details about each board location
         # storage format is [piece_name, currently_selected, x_y_coordinate]
@@ -74,9 +72,11 @@ class Breakthrough(object):
             self.piece_location[chr(i)][1][0] = "white_pawn"
             self.piece_location[chr(i)][2][0] = "white_pawn"
 
-
-    # 
-    def play_turn(self):
+        # reset AI
+        self.white_AI = algorithm(breakthrough_board(True))
+        self.black_AI = algorithm(breakthrough_board(False))
+        
+    def turn_infor(self):
         # white color
         white_color = (255, 255, 255)
         # create fonts for texts
@@ -91,21 +91,31 @@ class Breakthrough(object):
         self.screen.blit(turn_text, 
                       ((self.screen.get_width() - turn_text.get_width()) // 2,
                       10))
+    # 
+    def play_turn(self):
         
         # let player with black piece play
         if(self.turn["black"]):
-            self.move_piece("black")
-            self.algo_suggest = False
+            if self.black_is_AI:
+                self.black_AI.start_time = time.time()
+                best_value, best_move = self.black_AI.alpha_beta_pruning(5, -self.inf, self.inf, '')
+                print(f'black should move {best_move[:2]} to {best_move[2:]}')
+                print(f'AI run time: {time.time() - self.black_AI.start_time}')
+                self.move_piece("black", ['black_pawn', best_move[0], int(best_move[1])])
+                self.move_piece("black", ["", best_move[2], int(best_move[3])])
+            else:
+                self.move_piece("black")
         # let player with white piece play
         elif(self.turn["white"]):
-            
-            if self.algo_suggest == False:
-                self.AI.start_time = time.time()
-                best_value, best_move = self.AI.alpha_beta_pruning(5, -self.inf, self.inf, '')
+            if self.white_is_AI:
+                self.white_AI.start_time = time.time()
+                best_value, best_move = self.white_AI.alpha_beta_pruning(5, -self.inf, self.inf, '')
                 print(f'white should move {best_move[:2]} to {best_move[2:]}')
-                print(f'total time: {time.time() - self.AI.start_time}')
-                self.algo_suggest = True
-            self.move_piece("white")
+                print(f'AI run time: {time.time() - self.white_AI.start_time}')
+                self.move_piece("white", ['white_pawn', best_move[0], int(best_move[1])])
+                self.move_piece("white", ["", best_move[2], int(best_move[3])])
+            else:
+                self.move_piece("white")
             # self.move_piece("white", ["white_pawn", best_move[0], int(best_move[1])])
             # self.move_piece("white", ["", best_move[2], int(best_move[3])])
             
@@ -432,8 +442,8 @@ class Breakthrough(object):
                     elif("white"):
                         self.turn["black"] = 1
                         self.turn["white"] = 0
-                    self.AI.board.move_chessmen(src_location+des_location)
-
+                    self.white_AI.board.move_chessmen(src_location+des_location)
+                    self.black_AI.board.move_chessmen(src_location+des_location)
     # helper function to find diagonal moves
     def diagonal_moves(self, positions, piece_name, piece_coord):
         # reset x and y coordinate values

@@ -5,6 +5,7 @@ from piece import Piece
 from breakthrough import Breakthrough
 from utils import Utils
 
+
 class Game:
     def __init__(self):
         # screen dimensions
@@ -27,6 +28,9 @@ class Game:
 
         # title of window
         window_title = "Chess"
+        
+        self.white_btn_label_text = "White is Player"
+        self.black_btn_label_text = "Black is Player"
         # set window caption
         pygame.display.set_caption(window_title)
 
@@ -42,6 +46,8 @@ class Game:
         self.clock = pygame.time.Clock()
 
 
+        
+        
     def start_game(self):
         """Function containing main game loop""" 
         # chess board offset
@@ -117,22 +123,29 @@ class Game:
         # set background color
         self.screen.fill(bg_color)
         # black color
-        black_color = (0, 0, 0)
+        pink_color = (237, 90, 101)
         # coordinates for "Play" button
         start_btn = pygame.Rect(270, 300, 100, 50)
+        white_btn = pygame.Rect(150, 360, 150, 50)
+        black_btn = pygame.Rect(340, 360, 150, 50)
         # show play button
-        pygame.draw.rect(self.screen, black_color, start_btn)
-
+        pygame.draw.rect(self.screen, pink_color, start_btn)
+        pygame.draw.rect(self.screen, pink_color, white_btn)
+        pygame.draw.rect(self.screen, pink_color, black_btn)
         # white color
         white_color = (255, 255, 255)
         # create fonts for texts
         big_font = pygame.font.SysFont("comicsansms", 50)
         small_font = pygame.font.SysFont("comicsansms", 20)
+        mini_font = pygame.font.SysFont("comicsansms", 12)
         # create text to be shown on the game menu
-        welcome_text = big_font.render("Breakthrough", False, black_color)
-        original_chess_created_by = small_font.render("Original chess game created by Sheriff", True, black_color)
-        Breakthrough_created_by = small_font.render("Breakthrough created by Sophie", True, black_color)
+        welcome_text = big_font.render("Breakthrough", False, pink_color)
+        original_chess_created_by = mini_font.render("Modified from Sheriff's chess", True, pink_color)
+        Breakthrough_created_by = small_font.render("Breakthrough created by Sophie", True, pink_color)
         start_btn_label = small_font.render("Play", True, white_color)
+        white_btn_label = small_font.render(self.white_btn_label_text, True, white_color)
+
+        black_btn_label = small_font.render(self.black_btn_label_text, True, white_color)
         
         # show welcome text
         self.screen.blit(welcome_text, 
@@ -149,6 +162,15 @@ class Game:
         self.screen.blit(start_btn_label, 
                       ((start_btn.x + (start_btn.width - start_btn_label.get_width()) // 2, 
                       start_btn.y + (start_btn.height - start_btn_label.get_height()) // 2)))
+        # set player
+        
+        self.screen.blit(white_btn_label, 
+                      ((white_btn.x + (white_btn.width - white_btn_label.get_width()) // 2, 
+                      white_btn.y + (white_btn.height - white_btn_label.get_height()) // 2)))
+
+        self.screen.blit(black_btn_label, 
+                      ((black_btn.x + (black_btn.width - black_btn_label.get_width()) // 2, 
+                      black_btn.y + (black_btn.height - black_btn_label.get_height()) // 2)))
 
         # get pressed keys
         key_pressed = pygame.key.get_pressed()
@@ -167,6 +189,26 @@ class Game:
                 
                 # change menu flag
                 self.menu_showed = True
+            elif white_btn.collidepoint(mouse_coords[0], mouse_coords[1]):
+                # change button behavior as it is hovered
+                pygame.draw.rect(self.screen, white_color, white_btn, 3)
+                
+                # change menu flag
+                self.chess.white_is_AI = not self.chess.white_is_AI
+                if self.chess.white_is_AI:
+                    self.white_btn_label_text = "White is AI"
+                else:
+                    self.white_btn_label_text = "White is Player"
+            elif black_btn.collidepoint(mouse_coords[0], mouse_coords[1]):
+                # change button behavior as it is hovered
+                pygame.draw.rect(self.screen, white_color, black_btn, 3)
+                
+                # change menu flag
+                self.chess.black_is_AI = not self.chess.black_is_AI
+                if self.chess.black_is_AI:
+                    self.black_btn_label_text = "Black is AI"
+                else:
+                    self.black_btn_label_text = "Black is Player"
             # check if enter or return key was pressed
             elif key_pressed[K_RETURN]:
                 self.menu_showed = True
@@ -183,6 +225,10 @@ class Game:
 
         # call self.chess. something
         self.chess.play_turn()
+        self.chess.draw_pieces()
+        self.chess.turn_infor()
+        
+        
         # draw pieces on the chess board
         self.chess.draw_pieces()
 
@@ -244,6 +290,7 @@ class Game:
             elif key_pressed[K_RETURN]:
                 self.menu_showed = False
             # reset game
+            print("reset the game")
             self.chess.reset()
             # clear winner
             self.chess.winner = ""
